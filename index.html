@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ケロピョンジャンプ - 令和最新カメラ完全同期版</title>
+    <title>ケロピョンジャンプ - 怒濤の強制スクロール</title>
     <style>
         body {
             margin: 0;
@@ -19,7 +19,6 @@
             -webkit-user-select: none;
         }
 
-        /* 縦長コンパクトサイズ（360px×560px） */
         #game-container {
             width: 360px;
             height: 560px;
@@ -127,7 +126,7 @@
             z-index: 5;
         }
         
-        /* ★アニメーションのtransitionを完全消去！0ミリ秒で瞬間同期する令和仕様ケロ！ */
+        /* ★強制スクロールコンテナ（毎フレーム位置が少しずつ下に下がっていくケロ！） */
         #stage-scroll-container {
             width: 100%;
             height: 100%;
@@ -142,7 +141,7 @@
         /* ゴール土手 */
         .river-bank { position: absolute; left: 0; width: 100%; height: 120px; background-color: #81c784; border-bottom: 6px dashed white; z-index: 1; }
         
-        /* UI固定配置層 */
+        /* UI固定レイヤー */
         .game-ui-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -156,7 +155,6 @@
         }
         .header-top { display: flex; justify-content: space-between; width: 100%; align-items: center; }
         .score-box { font-size: 18px; font-weight: 900; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; }
-        .timer-box { font-size: 20px; font-weight: bold; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; background-color: rgba(78, 52, 46, 0.4); padding: 2px 12px; border-radius: 15px; }
         .life-box { font-size: 16px; color: #ffeb3b; font-weight: bold; text-shadow: 1px 1px 2px #000; align-self: flex-start; }
 
         /* --- 4. 超すけすけフィナーレ画面 --- */
@@ -185,7 +183,6 @@
         .frog-blush-l, .frog-blush-r { width: 6px; height: 3px; background-color: #ffab91; border-radius: 50%; position: absolute; top: 22px; }
         .frog-blush-l { left: 5px; } .frog-blush-r { right: 5px; }
 
-        /* ★カエルの移動アニメーションの遅れ(transition)も完全廃止して瞬間同期ケロ！ */
         #stage-objects .frog { position: absolute; transform: scale(0.8); transform-origin: bottom center; z-index: 15; transition: none !important; }
 
         /* 蓮の葉 */
@@ -256,11 +253,11 @@
     <div id="info-screen" class="screen hidden">
         <div class="info-box">
             <h3 style="margin-top:0; font-size: 15px;">【あそびかたケロ！】</h3>
-            <p><strong>📱 iPhone：</strong>次のハスの葉を直接タップ！<br>
-            <strong>💻 PC：</strong>スペースキーでジャンプ！</p>
-            <p style="color: #d32f2f; font-weight: bold; margin: 5px 0;">🐍 左右にルートが分かれるエリアが出現！<br>
-            ヘビのいない安全なルートをパッと見極めて進むケロ！</p>
-            <p>ライフは 💚💚💚 3回チャンスがあるケロ！🏁</p>
+            <p><strong>📱 iPhone：</strong>ハスの葉を直接タップしてジャンプ！<br>
+            <strong>💻 PC：</strong>スペースキーで自動前進ジャンプ！</p>
+            <p style="color: #d32f2f; font-weight: bold; margin: 5px 0;">⚠️ 警告：画面が自動でジワジワ進むケロ！<br>
+            下端に置いていかれて見えなくなるとアウト！</p>
+            <p>ヘビを避け、3機ライフで100点を目指せ！🏁</p>
         </div>
         <button class="big-action-btn" onclick="startGame()" style="margin-top: 15px;">わかった 🆗</button>
     </div>
@@ -269,7 +266,6 @@
         <div class="game-ui-layer">
             <div class="header-top">
                 <div id="score-display" class="score-box">SCORE: 0</div>
-                <div id="timer-display" class="timer-box">03:00</div>
             </div>
             <div id="life-display" class="life-box">LIFE: 💚 💚 💚</div>
         </div>
@@ -297,14 +293,15 @@
     let score = 0;
     let currentLeafRow = 0; 
     let leavesData = []; 
-    let gameTimer = null;
     let animationFrameId = null;
-    let timeLeft = 3000;
-    const timerMax = 3000;
     let isGameOver = false;
     let lives = 3; 
 
-    const leafIntervalY = 48; 
+    // ★強制スクロール用のカメラ位置変数
+    let cameraY = 0; 
+    let baseScrollSpeed = 0.6; // 初期の自動スクロール速度ケロ
+
+    const leafIntervalY = 54; // 配置間隔を少し広げて、タップしやすくしたケロ
     let bgm = new Audio('frog_bgm.mp3');
     bgm.loop = true;
 
@@ -341,10 +338,10 @@
         currentLeafRow = 0;
         isGameOver = false;
         lives = 3; 
+        cameraY = 0; // スクロール位置リセット
         updateLifeDisplay();
         document.getElementById('score-display').innerText = `SCORE: ${score}`;
         
-        // カメラ瞬間初期化
         document.getElementById('stage-scroll-container').style.transform = `translateY(0px)`;
         
         bgm.currentTime = 0;
@@ -365,14 +362,15 @@
         leavesData = [];
         generateMap();
 
+        // ゴール陸地の絶対位置を設定ケロ
         document.getElementById('goal-bank').style.top = `${560 - (100 * leafIntervalY) - 150}px`;
 
         renderInitialStage();
         positionFrogOnLeaf();
-        resetTimer();
         
         if(animationFrameId) cancelAnimationFrame(animationFrameId);
-        animateLeaves();
+        // ★毎フレーム動く統合アニメーションループ開始ケロ！
+        animateGame();
     }
 
     function updateLifeDisplay() {
@@ -405,8 +403,8 @@
                         rightHasSnake = false;
                     }
 
-                    rowData.leafs.push({ id: `r${row}-l0`, type: 'left', left: 35 + Math.random()*40, hasSnake: leftHasSnake });
-                    rowData.leafs.push({ id: `r${row}-l1`, type: 'right', left: 235 + Math.random()*40, hasSnake: rightHasSnake });
+                    rowData.leafs.push({ id: `r${row}-l0`, type: 'left', left: 30 + Math.random()*40, hasSnake: leftHasSnake });
+                    rowData.leafs.push({ id: `r${row}-l1`, type: 'right', left: 240 + Math.random()*40, hasSnake: rightHasSnake });
                     
                     previousRowWasSnake = (leftHasSnake || rightHasSnake);
                 } else {
@@ -418,10 +416,10 @@
                 }
             }
 
-            let speedMultiplier = 1 + (row * 0.05);
+            let speedMultiplier = 1 + (row * 0.04);
             rowData.leafs.forEach(leaf => {
                 leaf.direction = Math.random() > 0.5 ? 1 : -1;
-                leaf.speed = (0.3 + Math.random() * 0.7) * speedMultiplier;
+                leaf.speed = (0.2 + Math.random() * 0.5) * speedMultiplier;
                 leaf.currentLeft = leaf.left;
             });
 
@@ -430,9 +428,7 @@
     }
 
     function renderInitialStage() {
-        for (let i = 0; i <= 105; i++) {
-            drawRow(i);
-        }
+        for (let i = 0; i <= 105; i++) { drawRow(i); }
     }
 
     function drawRow(rowIndex) {
@@ -480,9 +476,19 @@
         });
     }
 
-    function animateLeaves() {
+    // ★【新システム】ゲームの毎フレームメイン処理（葉っぱの横移動 ＋ 強制スクロール！）
+    function animateGame() {
         if (isGameOver) return;
         
+        // 1. スコア（現在の高さ）に応じて、強制スクロール速度がどんどんアップ！
+        let currentSpeed = baseScrollSpeed + (currentLeafRow * 0.015);
+        cameraY += currentSpeed; 
+
+        // 2. スクロールコンテナの位置を更新
+        const scrollContainer = document.getElementById('stage-scroll-container');
+        scrollContainer.style.transform = `translateY(${cameraY}px)`;
+
+        // 3. 葉っぱの横反復移動処理
         leavesData.forEach(rowData => {
             rowData.leafs.forEach(leaf => {
                 let dom = document.getElementById(leaf.id);
@@ -502,15 +508,25 @@
             });
         });
 
+        // 4. カエルを乗っている葉っぱに同期
         let currentFrogLeaf = findCurrentFrogLeafData();
-        if (currentFrogLeaf) {
-            const frog = document.getElementById('player-frog');
-            if (frog) {
-                frog.style.left = (currentFrogLeaf.currentLeft + 8) + 'px';
+        const frog = document.getElementById('player-frog');
+        if (currentFrogLeaf && frog) {
+            frog.style.left = (currentFrogLeaf.currentLeft + 8) + 'px';
+        }
+
+        // ★5. 【超重要】カエルが画面の下にはみ出して置いていかれたかチェック！
+        if (frog) {
+            let frogBottomReal = 60 + (currentLeafRow * leafIntervalY);
+            let screenBottomY = cameraY; // 画面の一番底の座標
+            
+            // カエルが画面の下端（スクロールで見えなくなるところ）より下にいったらアウト！
+            if (frogBottomReal < screenBottomY - 10) {
+                handleMistake("あーーっ！画面に置いていかれて川に落ちちゃったケロ！🐸");
             }
         }
 
-        animationFrameId = requestAnimationFrame(animateLeaves);
+        animationFrameId = requestAnimationFrame(animateGame);
     }
 
     function findCurrentFrogLeafData() {
@@ -591,54 +607,40 @@
 
         currentLeafRow = targetRow;
         
-        // ★【令和大修正】カエル自身の座標を瞬間同期
+        // カエルを移動
         const frog = document.getElementById('player-frog');
         let leafBottom = 60 + (currentLeafRow * leafIntervalY);
         frog.style.left = (leafData.currentLeft + 8) + 'px';
         frog.style.bottom = (leafBottom + 12) + 'px';
 
-        // ★【令和大修正】カメラ（スクロールコンテナ）を一瞬の遅延（0秒）もなく即座に引き下げるケロ！
-        // これによりカエルの連打スピードがどれだけ神がかっていても、1ミリもはみ出さなくなるケロ！
-        const scrollContainer = document.getElementById('stage-scroll-container');
-        let offsetY = currentLeafRow * leafIntervalY;
-        scrollContainer.style.transform = `translateY(${offsetY}px)`;
-
-        resetTimer();
+        // ★カエルが登った時、もしカメラが遅れていたら、カエルが常に見えやすい位置になるようにカメラを最低限引っ張り上げるケロ
+        let minCameraY = (currentLeafRow * leafIntervalY) - 180;
+        if (cameraY < minCameraY) {
+            cameraY = minCameraY;
+        }
     }
 
     function handleMistake(reasonMsg) {
-        clearInterval(gameTimer);
+        // 一瞬ループを止める
+        cancelAnimationFrame(animationFrameId);
         lives--;
         updateLifeDisplay();
 
         if (lives <= 0) {
             gameOver(reasonMsg + "\nついにライフがゼロになっちゃったケロ……");
         } else {
-            alert(`${reasonMsg}\nでも大丈夫！ライフを使ってその場で復活ケロ！ (残りLIFE: ${lives})`);
+            alert(`${reasonMsg}\nライフを使って復活ケロ！画面の少し上へ押し上げるケロよ！`);
+            
+            // 復活時、画面の下端に即死しないようにカメラ位置を少し救済調整するケロ
+            cameraY = (currentLeafRow * leafIntervalY) - 120;
+            
             positionFrogOnLeaf();
-            resetTimer();
+            // アニメーションを再開
+            animateGame();
         }
     }
 
-    function resetTimer() {
-        clearInterval(gameTimer);
-        timeLeft = timerMax;
-        
-        gameTimer = setInterval(() => {
-            timeLeft -= 50;
-            let seconds = Math.floor(timeLeft / 1000);
-            let millis = Math.floor((timeLeft % 1000) / 10);
-            document.getElementById('timer-display').innerText = 
-                `0${seconds}:${millis < 10 ? '0' + millis : millis}`;
-
-            if(timeLeft <= 0) {
-                handleMistake("あーーっ！3秒経って水に落ちちゃったケロ！🐸");
-            }
-        }, 50);
-    }
-
     function winGame() {
-        clearInterval(gameTimer);
         cancelAnimationFrame(animationFrameId);
         isGameOver = true;
         bgm.pause();
@@ -666,7 +668,6 @@
         document.getElementById('finale-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('custom-screen').classList.remove('hidden');
-        document.getElementById('timer-display').innerText = "03:00";
     }
 </script>
 
