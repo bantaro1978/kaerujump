@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ケロピョンジャンプ - カメラ追従修正版</title>
+    <title>ケロピョンジャンプ - 令和最新カメラ完全同期版</title>
     <style>
         body {
             margin: 0;
@@ -123,26 +123,26 @@
 
         /* --- 3. ゲーム本番画面 --- */
         #game-screen {
-            background: #29b6f6; /* ベースの水の色 */
+            background: #29b6f6;
             z-index: 5;
         }
         
-        /* ★カメラ追従のためにステージ全体を動かすコンテナケロ！ */
+        /* ★アニメーションのtransitionを完全消去！0ミリ秒で瞬間同期する令和仕様ケロ！ */
         #stage-scroll-container {
             width: 100%;
             height: 100%;
             position: absolute;
             bottom: 0;
             left: 0;
-            transition: transform 0.15s ease-out; /* スクロールを滑らか＆高速にするケロ！ */
+            transition: none !important; 
         }
 
         #stage-objects { width: 100%; height: 100%; position: relative; }
         
-        /* 100点以上のゴール土手（最上部に配置されるケロ） */
-        .river-bank { position: absolute; top: -3300px; left: 0; width: 100%; height: 120px; background-color: #81c784; border-bottom: 6px dashed white; z-index: 1; }
+        /* ゴール土手 */
+        .river-bank { position: absolute; left: 0; width: 100%; height: 120px; background-color: #81c784; border-bottom: 6px dashed white; z-index: 1; }
         
-        /* ゲーム中UI固定配置（スクロールコンテナの外に置くケロ） */
+        /* UI固定配置層 */
         .game-ui-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -185,7 +185,8 @@
         .frog-blush-l, .frog-blush-r { width: 6px; height: 3px; background-color: #ffab91; border-radius: 50%; position: absolute; top: 22px; }
         .frog-blush-l { left: 5px; } .frog-blush-r { right: 5px; }
 
-        #stage-objects .frog { position: absolute; transform: scale(0.8); transform-origin: bottom center; z-index: 15; transition: left 0.1s ease-out, bottom 0.15s ease-out; }
+        /* ★カエルの移動アニメーションの遅れ(transition)も完全廃止して瞬間同期ケロ！ */
+        #stage-objects .frog { position: absolute; transform: scale(0.8); transform-origin: bottom center; z-index: 15; transition: none !important; }
 
         /* 蓮の葉 */
         .leaf {
@@ -303,7 +304,7 @@
     let isGameOver = false;
     let lives = 3; 
 
-    const leafIntervalY = 48; // 縦の間隔を少し広げてジャンプ感をアップケロ！
+    const leafIntervalY = 48; 
     let bgm = new Audio('frog_bgm.mp3');
     bgm.loop = true;
 
@@ -343,7 +344,7 @@
         updateLifeDisplay();
         document.getElementById('score-display').innerText = `SCORE: ${score}`;
         
-        // カメラの位置をリセット（最初はスクロールなし）
+        // カメラ瞬間初期化
         document.getElementById('stage-scroll-container').style.transform = `translateY(0px)`;
         
         bgm.currentTime = 0;
@@ -353,7 +354,6 @@
         const elementsToRemove = stage.querySelectorAll('.leaf, #player-frog');
         elementsToRemove.forEach(el => el.remove());
 
-        // マイカエル生成
         const frog = document.createElement('div');
         frog.id = 'player-frog';
         frog.className = 'frog';
@@ -365,12 +365,9 @@
         leavesData = [];
         generateMap();
 
-        // 100枚目のゴール陸地の正しい縦位置を設定ケロ
         document.getElementById('goal-bank').style.top = `${560 - (100 * leafIntervalY) - 150}px`;
 
-        // 葉っぱを描画
         renderInitialStage();
-
         positionFrogOnLeaf();
         resetTimer();
         
@@ -451,7 +448,6 @@
             leaf.id = leafInfo.id;
             leaf.dataset.row = rowIndex;
 
-            // ★配置位置を下からの絶対座標にするケロ（560pxのコンテナの底が基準）
             let bottomPosition = 60 + (rowIndex * leafIntervalY);
             leaf.style.bottom = bottomPosition + 'px';
             leaf.style.left = leafInfo.currentLeft + 'px';
@@ -595,14 +591,14 @@
 
         currentLeafRow = targetRow;
         
-        // カエル自身の座標を先に更新
+        // ★【令和大修正】カエル自身の座標を瞬間同期
         const frog = document.getElementById('player-frog');
         let leafBottom = 60 + (currentLeafRow * leafIntervalY);
         frog.style.left = (leafData.currentLeft + 8) + 'px';
         frog.style.bottom = (leafBottom + 12) + 'px';
 
-        // ★【ここが大修正】カエルが登るのではなく、ステージ全体をカエルの高さ分「上にスライド（引き下げ）」するケロ！
-        // これにより、カエルは常に画面の同じ「下側の安全な高さ」に留まり続けるケロ！
+        // ★【令和大修正】カメラ（スクロールコンテナ）を一瞬の遅延（0秒）もなく即座に引き下げるケロ！
+        // これによりカエルの連打スピードがどれだけ神がかっていても、1ミリもはみ出さなくなるケロ！
         const scrollContainer = document.getElementById('stage-scroll-container');
         let offsetY = currentLeafRow * leafIntervalY;
         scrollContainer.style.transform = `translateY(${offsetY}px)`;
@@ -656,7 +652,6 @@
         bgm.pause();
         const frog = document.getElementById('player-frog');
         if(frog) {
-            // 下に落ちる演出
             frog.style.transition = 'bottom 0.5s ease-in';
             frog.style.bottom = '-100px';
         }
