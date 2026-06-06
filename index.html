@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ケロピョンジャンプ - 分岐と3機の試練</title>
+    <title>ケロピョンジャンプ - カメラ追従修正版</title>
     <style>
         body {
             margin: 0;
@@ -123,14 +123,37 @@
 
         /* --- 3. ゲーム本番画面 --- */
         #game-screen {
-            background: linear-gradient(to bottom, #a5d6a7 0%, #4fc3f7 15%, #29b6f6 100%);
+            background: #29b6f6; /* ベースの水の色 */
             z-index: 5;
         }
-        #stage-objects { width: 100%; height: 100%; position: relative; }
-        .river-bank { position: absolute; top: 0; left: 0; width: 100%; height: 50px; background-color: #81c784; border-bottom: 5px solid #66bb6a; z-index: 1; }
         
-        /* ゲーム中UI（スコア、タイマー、ライフ） */
-        .game-header { position: absolute; top: 10px; width: 90%; left: 5%; display: flex; flex-direction: column; gap: 4px; z-index: 30; pointer-events: none; }
+        /* ★カメラ追従のためにステージ全体を動かすコンテナケロ！ */
+        #stage-scroll-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            transition: transform 0.15s ease-out; /* スクロールを滑らか＆高速にするケロ！ */
+        }
+
+        #stage-objects { width: 100%; height: 100%; position: relative; }
+        
+        /* 100点以上のゴール土手（最上部に配置されるケロ） */
+        .river-bank { position: absolute; top: -3300px; left: 0; width: 100%; height: 120px; background-color: #81c784; border-bottom: 6px dashed white; z-index: 1; }
+        
+        /* ゲーム中UI固定配置（スクロールコンテナの外に置くケロ） */
+        .game-ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            padding: 10px 18px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
         .header-top { display: flex; justify-content: space-between; width: 100%; align-items: center; }
         .score-box { font-size: 18px; font-weight: 900; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; }
         .timer-box { font-size: 20px; font-weight: bold; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; background-color: rgba(78, 52, 46, 0.4); padding: 2px 12px; border-radius: 15px; }
@@ -154,7 +177,6 @@
         .frog {
             width: 52px; height: 48px; background-color: #ffffff; border-radius: 53% 53% 47% 47%; position: relative;
             box-shadow: inset -3px -3px 6px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.2);
-            transition: background-color 0.2s;
         }
         .frog-eye-l, .frog-eye-r { width: 15px; height: 15px; background-color: inherit; border-radius: 50%; position: absolute; top: -5px; }
         .frog-eye-l { left: 7px; } .frog-eye-r { right: 7px; }
@@ -163,13 +185,7 @@
         .frog-blush-l, .frog-blush-r { width: 6px; height: 3px; background-color: #ffab91; border-radius: 50%; position: absolute; top: 22px; }
         .frog-blush-l { left: 5px; } .frog-blush-r { right: 5px; }
 
-        /* 模様 */
-        .pattern-tsuno::after { content: '▲ ▲'; position: absolute; top: -9px; left: 11px; font-size: 7px; color: inherit; filter: brightness(80%); }
-        .pattern-tsuno { background-image: radial-gradient(circle at 30% 30%, rgba(0,0,0,0.12) 15%, transparent 16%), radial-gradient(circle at 70% 30%, rgba(0,0,0,0.12) 15%, transparent 16%); }
-        .pattern-amagaeru { background-image: linear-gradient(90deg, rgba(0,0,0,0.1) 15%, transparent 15%), linear-gradient(270deg, rgba(0,0,0,0.1) 15%, transparent 15%); }
-        .pattern-ushigaeru { background-image: radial-gradient(circle at 25% 40%, rgba(0,0,0,0.15) 15%, transparent 16%), radial-gradient(circle at 75% 50%, rgba(0,0,0,0.15) 20%, transparent 21%), radial-gradient(circle at 50% 75%, rgba(0,0,0,0.15) 12%, transparent 13%); }
-
-        #stage-objects .frog { position: absolute; transform: scale(0.8); transform-origin: bottom center; z-index: 15; }
+        #stage-objects .frog { position: absolute; transform: scale(0.8); transform-origin: bottom center; z-index: 15; transition: left 0.1s ease-out, bottom 0.15s ease-out; }
 
         /* 蓮の葉 */
         .leaf {
@@ -249,14 +265,17 @@
     </div>
 
     <div id="game-screen" class="screen hidden">
-        <div id="stage-objects">
-            <div class="river-bank"></div>
-            <div class="game-header">
-                <div class="header-top">
-                    <div id="score-display" class="score-box">SCORE: 0</div>
-                    <div id="timer-display" class="timer-box">03:00</div>
-                </div>
-                <div id="life-display" class="life-box">LIFE: 💚 💚 💚</div>
+        <div class="game-ui-layer">
+            <div class="header-top">
+                <div id="score-display" class="score-box">SCORE: 0</div>
+                <div id="timer-display" class="timer-box">03:00</div>
+            </div>
+            <div id="life-display" class="life-box">LIFE: 💚 💚 💚</div>
+        </div>
+
+        <div id="stage-scroll-container">
+            <div id="stage-objects">
+                <div class="river-bank" id="goal-bank"></div>
             </div>
         </div>
     </div>
@@ -275,16 +294,16 @@
     let currentColor = '#ffffff';
     let currentPattern = 'none';
     let score = 0;
-    let currentLeafRow = 0; // 現在カエルがいる「行（高さ）」
-    let leavesData = []; // ステージの葉っぱデータを格納する配列
+    let currentLeafRow = 0; 
+    let leavesData = []; 
     let gameTimer = null;
     let animationFrameId = null;
     let timeLeft = 3000;
     const timerMax = 3000;
     let isGameOver = false;
-    let lives = 3; // ★カエルのライフ！3つ！
+    let lives = 3; 
 
-    const leafIntervalY = 32; 
+    const leafIntervalY = 48; // 縦の間隔を少し広げてジャンプ感をアップケロ！
     let bgm = new Audio('frog_bgm.mp3');
     bgm.loop = true;
 
@@ -320,9 +339,12 @@
         score = 0;
         currentLeafRow = 0;
         isGameOver = false;
-        lives = 3; // ライフを3機に満タンチャージ！
+        lives = 3; 
         updateLifeDisplay();
         document.getElementById('score-display').innerText = `SCORE: ${score}`;
+        
+        // カメラの位置をリセット（最初はスクロールなし）
+        document.getElementById('stage-scroll-container').style.transform = `translateY(0px)`;
         
         bgm.currentTime = 0;
         bgm.play().catch(e => {});
@@ -341,10 +363,12 @@
         stage.appendChild(frog);
 
         leavesData = [];
-        // 初期マップをまとめて110行分生成（詰みなし分岐アルゴリズム適用）
         generateMap();
 
-        // 最初の数枚を画面に描画
+        // 100枚目のゴール陸地の正しい縦位置を設定ケロ
+        document.getElementById('goal-bank').style.top = `${560 - (100 * leafIntervalY) - 150}px`;
+
+        // 葉っぱを描画
         renderInitialStage();
 
         positionFrogOnLeaf();
@@ -362,7 +386,6 @@
         document.getElementById('life-display').innerText = lifeStr;
     }
 
-    // 詰みを完全に防ぎ、分岐を生成するマップ自動アルゴリズム
     function generateMap() {
         let previousRowWasSnake = false;
 
@@ -370,41 +393,34 @@
             let rowData = { row: row, leafs: [] };
 
             if (row === 0) {
-                // スタート地点は中央に1枚
-                rowData.leafs.push({ id: `r0-l0`, type: 'left', left: 145, hasSnake: false });
+                rowData.leafs.push({ id: `r0-l0`, type: 'center', left: 145, hasSnake: false });
             } else if (row >= 100) {
-                // ゴールエリア（100行目以降）は安全な葉っぱのみ
-                rowData.leafs.push({ id: `r${row}-l0`, type: 'left', left: 145, hasSnake: false });
+                rowData.leafs.push({ id: `r${row}-l0`, type: 'center', left: 145, hasSnake: false });
             } else {
-                // 通常の川エリア。ときどき左右に分岐ルートを作るケロ！
-                let isBranch = Math.random() < 0.45 && row > 2; // 45%の確率で左右分岐
+                let isBranch = Math.random() < 0.45 && row > 2; 
 
                 if (isBranch) {
-                    // ★左右分岐ルート生成！
                     let leftHasSnake = Math.random() < 0.4;
-                    let rightHasSnake = !leftHasSnake ? Math.random() < 0.4 : false; // 両方ヘビ（詰み）は絶対に避けるケロ！
+                    let rightHasSnake = !leftHasSnake ? Math.random() < 0.4 : false; 
 
-                    // 前の行がヘビだった場合は、この行は両方安全にする
                     if (previousRowWasSnake) {
                         leftHasSnake = false;
                         rightHasSnake = false;
                     }
 
-                    rowData.leafs.push({ id: `r${row}-l0`, type: 'left', left: 45 + Math.random()*40, hasSnake: leftHasSnake });
-                    rowData.leafs.push({ id: `r${row}-l1`, type: 'right', left: 225 + Math.random()*40, hasSnake: rightHasSnake });
+                    rowData.leafs.push({ id: `r${row}-l0`, type: 'left', left: 35 + Math.random()*40, hasSnake: leftHasSnake });
+                    rowData.leafs.push({ id: `r${row}-l1`, type: 'right', left: 235 + Math.random()*40, hasSnake: rightHasSnake });
                     
                     previousRowWasSnake = (leftHasSnake || rightHasSnake);
                 } else {
-                    // 単一ルート
                     let hasSnake = Math.random() < 0.3 && row > 3;
-                    if (previousRowWasSnake) hasSnake = false; // 2連続ヘビで通路を塞ぐのを防止
+                    if (previousRowWasSnake) hasSnake = false; 
 
                     rowData.leafs.push({ id: `r${row}-l0`, type: 'center', left: 110 + Math.random()*100, hasSnake: hasSnake });
                     previousRowWasSnake = hasSnake;
                 }
             }
 
-            // 移動スピードと方向を決定（後半になるほど大加速！）
             let speedMultiplier = 1 + (row * 0.05);
             rowData.leafs.forEach(leaf => {
                 leaf.direction = Math.random() > 0.5 ? 1 : -1;
@@ -417,8 +433,7 @@
     }
 
     function renderInitialStage() {
-        const stage = document.getElementById('stage-objects');
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i <= 105; i++) {
             drawRow(i);
         }
     }
@@ -429,16 +444,15 @@
         const rowData = leavesData[rowIndex];
 
         rowData.leafs.forEach(leafInfo => {
-            // すでに描画済みならスキップ
             if (document.getElementById(leafInfo.id)) return;
 
             const leaf = document.createElement('div');
             leaf.className = 'leaf';
             leaf.id = leafInfo.id;
             leaf.dataset.row = rowIndex;
-            leaf.dataset.leafId = leafInfo.id;
 
-            let bottomPosition = 50 + (rowIndex * leafIntervalY);
+            // ★配置位置を下からの絶対座標にするケロ（560pxのコンテナの底が基準）
+            let bottomPosition = 60 + (rowIndex * leafIntervalY);
             leaf.style.bottom = bottomPosition + 'px';
             leaf.style.left = leafInfo.currentLeft + 'px';
 
@@ -457,12 +471,10 @@
                 leaf.appendChild(snake);
             }
 
-            // タップ操作：その葉っぱを目がけてジャンプ！
             leaf.addEventListener('click', function() {
                 if(document.getElementById('game-screen').classList.contains('hidden') || isGameOver) return;
                 let targetRow = parseInt(this.dataset.row);
                 
-                // 次の行、または2つ上の行の葉っぱなら直接ジャンプできるケロ
                 if (targetRow === currentLeafRow + 1 || targetRow === currentLeafRow + 2) {
                     jumpToRowAndLeaf(targetRow, leafInfo.id);
                 }
@@ -475,19 +487,17 @@
     function animateLeaves() {
         if (isGameOver) return;
         
-        // 画面内にある描画された葉っぱの位置を動かすケロ
         leavesData.forEach(rowData => {
             rowData.leafs.forEach(leaf => {
                 let dom = document.getElementById(leaf.id);
-                if (!dom) return; // 画面に出てない葉はスキップ
+                if (!dom) return;
 
-                if (rowData.row === 0 || rowData.row >= 100) return; // スタートとゴールは不動
+                if (rowData.row === 0 || rowData.row >= 100) return;
 
                 leaf.currentLeft += leaf.direction * leaf.speed;
 
-                // 跳ね返り処理
-                let maxRight = (rowData.leafs.length > 1) ? (leaf.type === 'left' ? 120 : 280) : 280;
-                let minLeft = (rowData.leafs.length > 1) ? (leaf.type === 'left' ? 5 : 160) : 5;
+                let maxRight = (rowData.leafs.length > 1) ? (leaf.type === 'left' ? 110 : 280) : 280;
+                let minLeft = (rowData.leafs.length > 1) ? (leaf.type === 'left' ? 5 : 170) : 5;
 
                 if (leaf.currentLeft < minLeft) { leaf.currentLeft = minLeft; leaf.direction = 1; }
                 if (leaf.currentLeft > maxRight) { leaf.currentLeft = maxRight; leaf.direction = -1; }
@@ -496,7 +506,6 @@
             });
         });
 
-        // カエルが今乗っている葉っぱの動きに同期させるケロ
         let currentFrogLeaf = findCurrentFrogLeafData();
         if (currentFrogLeaf) {
             const frog = document.getElementById('player-frog');
@@ -511,7 +520,6 @@
     function findCurrentFrogLeafData() {
         let currentRowData = leavesData[currentLeafRow];
         if (!currentRowData) return null;
-        // カエルが今いるX座標に一番近い葉っぱを返すケロ
         if (currentRowData.leafs.length === 1) return currentRowData.leafs[0];
         
         const frog = document.getElementById('player-frog');
@@ -536,14 +544,11 @@
         let currentLeaf = findCurrentFrogLeafData();
         if (!currentLeaf) return;
         
-        let dom = document.getElementById(currentLeaf.id);
-        let leafBottom = parseFloat(dom.style.bottom);
-        
+        let leafBottom = 60 + (currentLeafRow * leafIntervalY);
         frog.style.left = (currentLeaf.currentLeft + 8) + 'px';
         frog.style.bottom = (leafBottom + 12) + 'px';
     }
 
-    // PC用スペースキージャンプ（自動で安全なルートを選択してくれる安心AI機能ケロ！）
     window.addEventListener('keydown', function(event) {
         if (event.code === 'Space') {
             if(!document.getElementById('game-screen').classList.contains('hidden') && !isGameOver) {
@@ -553,14 +558,11 @@
                 let nextRowData = leavesData[nextRow];
                 if (!nextRowData) return;
 
-                // 次の行にヘビしかいなかったり、選択肢がある場合のジャンプ先決定ケロ
                 let targetLeaf = nextRowData.leafs[0];
                 
                 if (nextRowData.leafs.length > 1) {
-                    // 分岐があるとき：ヘビがいない安全な方を自動チョイス！
                     if (nextRowData.leafs[0].hasSnake) targetLeaf = nextRowData.leafs[1];
                 } else if (nextRowData.leafs[0].hasSnake) {
-                    // 1枚しかなくてヘビがいるときは、その上の行へ一気に飛び越えるケロ！
                     nextRow = currentLeafRow + 2;
                     let doubleNextRowData = leavesData[nextRow];
                     if (doubleNextRowData) targetLeaf = doubleNextRowData.leafs[0];
@@ -578,7 +580,6 @@
         score += steps;
         document.getElementById('score-display').innerText = `SCORE: ${score}`;
         
-        // 着地先の葉っぱのヘビ判定
         let leafData = null;
         leavesData[targetRow].leafs.forEach(l => { if(l.id === leafId) leafData = l; });
 
@@ -592,35 +593,23 @@
             return;
         }
 
-        // 先のマップを補充描画
-        for(let i = targetRow; i < targetRow + 20; i++) {
-            drawRow(i);
-        }
-
         currentLeafRow = targetRow;
         
-        // カエルを移動
+        // カエル自身の座標を先に更新
         const frog = document.getElementById('player-frog');
-        let dom = document.getElementById(leafId);
-        let leafBottom = parseFloat(dom.style.bottom);
+        let leafBottom = 60 + (currentLeafRow * leafIntervalY);
         frog.style.left = (leafData.currentLeft + 8) + 'px';
         frog.style.bottom = (leafBottom + 12) + 'px';
 
-        // カメラ（画面）をスクロール
-        setTimeout(() => {
-            const allLeaves = document.querySelectorAll('.leaf');
-            allLeaves.forEach(l => {
-                let currentB = parseFloat(l.style.bottom);
-                l.style.bottom = (currentB - (leafIntervalY * steps)) + 'px';
-            });
-            let frogB = parseFloat(frog.style.bottom);
-            frog.style.bottom = (frogB - (leafIntervalY * steps)) + 'px';
-        }, 40);
+        // ★【ここが大修正】カエルが登るのではなく、ステージ全体をカエルの高さ分「上にスライド（引き下げ）」するケロ！
+        // これにより、カエルは常に画面の同じ「下側の安全な高さ」に留まり続けるケロ！
+        const scrollContainer = document.getElementById('stage-scroll-container');
+        let offsetY = currentLeafRow * leafIntervalY;
+        scrollContainer.style.transform = `translateY(${offsetY}px)`;
 
         resetTimer();
     }
 
-    // ★【大注目】失敗したときの機数マイナス＆その場で復活システムケロ！
     function handleMistake(reasonMsg) {
         clearInterval(gameTimer);
         lives--;
@@ -629,14 +618,7 @@
         if (lives <= 0) {
             gameOver(reasonMsg + "\nついにライフがゼロになっちゃったケロ……");
         } else {
-            // まだ機数がある！その場で点滅して復活ケロ！
             alert(`${reasonMsg}\nでも大丈夫！ライフを使ってその場で復活ケロ！ (残りLIFE: ${lives})`);
-            
-            // 安全な位置（現在の行の一番安全な葉っぱ）に再配置するケロ
-            let currentRowData = leavesData[currentLeafRow];
-            let safeLeaf = currentRowData.leafs[0];
-            currentRowData.leafs.forEach(l => { if(!l.hasSnake) safeLeaf = l; });
-            
             positionFrogOnLeaf();
             resetTimer();
         }
@@ -674,6 +656,7 @@
         bgm.pause();
         const frog = document.getElementById('player-frog');
         if(frog) {
+            // 下に落ちる演出
             frog.style.transition = 'bottom 0.5s ease-in';
             frog.style.bottom = '-100px';
         }
