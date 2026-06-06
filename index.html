@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ケロピョンジャンプ - スマホ縦型完全版</title>
+    <title>ケロピョンジャンプ - スマホ縦型・完全バランス版</title>
     <style>
         body {
             margin: 0;
@@ -19,7 +19,6 @@
             -webkit-user-select: none;
         }
 
-        /* ★「ブンナ」の時のような縦長コンパクトサイズ（360px×560px）に完全固定ケロ！ */
         #game-container {
             width: 360px;
             height: 560px;
@@ -121,7 +120,7 @@
             text-align: center; color: #2e7d32; font-size: 13px; line-height: 1.5;
         }
 
-        /* --- 3. ゲーム本番画面（全面が川ステージ） --- */
+        /* --- 3. ゲーム本番画面 --- */
         #game-screen {
             background: linear-gradient(to bottom, #a5d6a7 0%, #4fc3f7 15%, #29b6f6 100%);
             z-index: 5;
@@ -129,12 +128,11 @@
         #stage-objects { width: 100%; height: 100%; position: relative; }
         .river-bank { position: absolute; top: 0; left: 0; width: 100%; height: 50px; background-color: #81c784; border-bottom: 5px solid #66bb6a; z-index: 1; }
         
-        /* ゲーム中UI */
         .game-header { position: absolute; top: 10px; width: 90%; left: 5%; display: flex; justify-content: space-between; align-items: center; z-index: 30; pointer-events: none; }
         .score-box { font-size: 18px; font-weight: 900; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; }
         .timer-box { font-size: 20px; font-weight: bold; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; background-color: rgba(78, 52, 46, 0.4); padding: 2px 12px; border-radius: 15px; }
 
-        /* --- 4. フィナーレ画面（すけすけ画像フィット） --- */
+        /* --- 4. 超すけすけフィナーレ画面 --- */
         #finale-screen {
             background-image: url('image_36e666.jpg');
             background-size: cover; background-position: center;
@@ -148,7 +146,7 @@
         }
         .celebration-text { font-size: 22px; font-weight: bold; color: #1b5e20; text-shadow: 2px 2px 4px white; margin: 0; animation: bounce 0.5s infinite alternate; }
 
-        /* カエル（縦長画面に合わせてさらにぷっくり可愛く） */
+        /* カエル */
         .frog {
             width: 52px; height: 48px; background-color: #ffffff; border-radius: 53% 53% 47% 47%; position: relative;
             box-shadow: inset -3px -3px 6px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.2);
@@ -201,7 +199,6 @@
     <div id="custom-screen" class="screen">
         <div class="title-logo">ケロピョンジャンプ</div>
         
-        <!-- プレビュー -->
         <div class="preview-box">
             <div id="preview-frog" class="frog">
                 <div class="frog-eye-l"><div class="pupil"></div></div><div class="frog-eye-r"><div class="pupil"></div></div>
@@ -209,7 +206,6 @@
             </div>
         </div>
 
-        <!-- 色選択バー -->
         <div class="panel-section">
             <p class="panel-title">カエルのいろ 🟥🩷🟧🟡</p>
             <div class="color-grid">
@@ -224,7 +220,6 @@
             </div>
         </div>
 
-        <!-- 模様選択バー -->
         <div class="panel-section">
             <p class="panel-title">カエルのもよう 🐸✨</p>
             <div class="pattern-selector">
@@ -235,7 +230,6 @@
             </div>
         </div>
 
-        <!-- 決定して次へ進むスタートボタン -->
         <button class="big-action-btn" onclick="pressStart()">START 🔘</button>
     </div>
 
@@ -262,7 +256,7 @@
         </div>
     </div>
 
-    <!-- 4. 超すけすけフィナーレ画面 -->
+    <!-- 4. フィナーレ画面 -->
     <div id="finale-screen" class="screen hidden">
         <div class="finale-banner">
             <div class="celebration-text">🎉 最高のフィナーレ！ 🎉</div>
@@ -284,6 +278,9 @@
     let timeLeft = 3000;
     const timerMax = 3000;
     let isGameOver = false;
+
+    // 前に生成した葉っぱにヘビがいたかを記憶するカウンターケロ
+    let consecutiveSafeCount = 0; 
 
     const leafIntervalY = 32; 
     let bgm = new Audio('frog_bgm.mp3');
@@ -321,17 +318,16 @@
         score = 0;
         currentLeafIndex = 0;
         isGameOver = false;
+        consecutiveSafeCount = 3; // 最初は安全
         document.getElementById('score-display').innerText = `SCORE: ${score}`;
         
         bgm.currentTime = 0;
         bgm.play().catch(e => {});
 
         const stage = document.getElementById('stage-objects');
-        // ヘビや葉っぱをリセット（ヘッダーと岸辺は残すケロ）
         const elementsToRemove = stage.querySelectorAll('.leaf, #player-frog');
         elementsToRemove.forEach(el => el.remove());
 
-        // ゲーム用のマイカエルを生成
         const frog = document.createElement('div');
         frog.id = 'player-frog';
         frog.className = 'frog';
@@ -358,7 +354,6 @@
         leaf.className = 'leaf';
         leaf.dataset.index = index;
         
-        // 360pxの縦長幅に合わせたランダム横位置調整
         let leftPosition = 15 + Math.random() * 255;
         if(index === 0) leftPosition = 145;
 
@@ -367,8 +362,13 @@
         leaf.style.bottom = bottomPosition + 'px';
         
         leaf.dataset.hasSnake = "false";
-        if (index > 3 && index < 100 && Math.random() < 0.35) {
+        
+        // ★【大修正】ヘビが連続しないようにチェックするケロ！
+        // 前のヘビから最低2枚は安全な葉っぱが続いていないとヘビを生成しない！
+        if (index > 3 && index < 100 && consecutiveSafeCount >= 2 && Math.random() < 0.35) {
             leaf.dataset.hasSnake = "true";
+            consecutiveSafeCount = 0; // ヘビを出したらカウンターリセット
+            
             const snake = document.createElement('div');
             snake.className = 'snake';
             
@@ -383,11 +383,14 @@
             else { snake.style.color = '#4caf50'; }
             
             leaf.appendChild(snake);
+        } else {
+            // ヘビが出なかった、または規制中の場合は安全カウントアップ
+            consecutiveSafeCount++;
         }
 
         leaf.dataset.direction = Math.random() > 0.5 ? 1 : -1;
-        let speedMultiplier = 1 + (index * 0.06); 
-        leaf.dataset.speed = (0.3 + Math.random() * 1.0) * speedMultiplier;
+        let speedMultiplier = 1 + (index * 0.05); // 後半の加速感を絶妙に調整
+        leaf.dataset.speed = (0.3 + Math.random() * 0.8) * speedMultiplier;
         leaf.dataset.currentLeft = leftPosition;
 
         leaf.addEventListener('click', function() {
@@ -415,7 +418,6 @@
 
             currentLeft += dir * speed;
 
-            // 360pxの壁で綺麗に跳ね返る調整ケロ
             if (currentLeft < 5) { currentLeft = 5; dir = 1; }
             if (currentLeft > 280) { currentLeft = 280; dir = -1; }
 
