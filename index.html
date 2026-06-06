@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ケロピョンジャンプ - 霧の試練</title>
+    <title>ケロピョンジャンプ - 神バランス版</title>
     <style>
         body {
             margin: 0;
@@ -140,21 +140,18 @@
         /* ゴール土手 */
         .river-bank { position: absolute; left: 0; width: 100%; height: 120px; background-color: #81c784; border-bottom: 6px dashed white; z-index: 1; }
         
-        /* ★【新要素】川にかかる「深い霧（グラデーション）」のレイヤーケロ！ */
+        /* 川にかかる深い霧の膜 */
         .river-fog-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(to bottom, 
-                rgba(255, 255, 255, 0.95) 0%,   /* 上のほうは真っ白な深い霧 */
-                rgba(255, 255, 255, 0.65) 25%,  /* 少し霧が薄くなる */
-                rgba(255, 255, 255, 0.2) 55%,   /* カエルに近づくとかなりすける */
-                transparent 85%                 /* カエルの足元はクッキリ！ */
+                rgba(255, 255, 255, 0.95) 0%,   
+                rgba(255, 255, 255, 0.65) 25%,  
+                rgba(255, 255, 255, 0.15) 55%,   
+                transparent 85%                 
             );
-            pointer-events: none; /* タップの邪魔をしない設定 */
-            z-index: 25; /* カエルや葉っぱ(10〜15)より上に重ねて霧をかぶせるケロ！ */
+            pointer-events: none;
+            z-index: 25;
         }
 
         /* UI固定レイヤー */
@@ -162,7 +159,7 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            z-index: 50; /* 霧(25)よりもさらに上にUIを置くケロ */
+            z-index: 50;
             padding: 12px 18px;
             box-sizing: border-box;
             display: flex;
@@ -204,14 +201,11 @@
         .leaf {
             width: 70px; height: 32px; background-color: #558b2f; border: 2px solid #33691e; border-radius: 50%; position: absolute;
             box-shadow: 0 4px 0px rgba(0,0,0,0.15); cursor: pointer; z-index: 10;
-            transition: opacity 0.2s ease-out; /* 半透明の切り替わりを滑らかにケロ */
+            transition: opacity 0.2s ease-out; 
         }
         .leaf::before { content: ''; position: absolute; width: 12px; height: 32px; background-color: #29b6f6; right: 6px; top: -2px; border-radius: 50%; }
 
-        /* ★【新ルール】カエルが届かない3個以上遠い葉っぱにつく、すかし（透明）クラス */
-        .leaf-locked {
-            opacity: 0.35 !important; /* 届かない葉っぱはこれくらい半透明にするケロ！ */
-        }
+        .leaf-locked { opacity: 0.35 !important; }
 
         /* もよう用CSS */
         .p-tsuno::after { content: '▲ ▲'; position: absolute; top: -9px; left: 11px; font-size: 7px; color: inherit; filter: brightness(80%); }
@@ -231,7 +225,15 @@
         .snake-small { transform: scale(0.7); top: -4px; left: 20px; }
         .snake-rainbow { background: linear-gradient(45deg, red, orange, yellow, green, blue, purple); color: #fff; }
         .snake-poop { background-color: #795548; border-color: #5d4037; border-radius: 50% 50% 40% 40%; }
-        .snake-trans { background-color: rgba(255, 255, 255, 0.2); color: rgba(0,0,0,0.1); opacity: 0.25; border-color: rgba(0,0,0,0.1); }
+        
+        /* ★【大修正】透明ヘビが見えなさすぎたので、怪しく白く光る「おばけ風ヘビ」に改良して視認性アップ！ */
+        .snake-trans { 
+            background-color: rgba(255, 255, 255, 0.75); 
+            color: #4e342e; 
+            border-color: #ffffff; 
+            box-shadow: 0 0 8px #ffffff, inset 0 0 3px rgba(0,0,0,0.2); 
+            opacity: 0.85; 
+        }
 
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
     </style>
@@ -284,7 +286,7 @@
             <strong>💻 PC：</strong>スペースキーで自動前進ジャンプ！</p>
             <p style="color: #4caf50; font-weight: bold; margin: 5px 0;">💡 ヒント：カエルが届くのは2個上の葉っぱまで！<br>
             届かない遠い葉っぱは【半透明（うすく）】になってるケロ！</p>
-            <p style="margin: 0;">上流の「深い霧」から迫るヘビを見極めろ！🏁</p>
+            <p style="margin: 0;">画面外に置いていかれないように登るケロ！🏁</p>
         </div>
         <button class="big-action-btn" onclick="startGame()" style="margin-top: 15px;">わかった 🆗</button>
     </div>
@@ -325,7 +327,8 @@
     let lives = 3; 
 
     let cameraY = 0; 
-    let baseScrollSpeed = 0.5; 
+    let baseScrollSpeed = 0.45; // 最初の強制スクロール速度を少しだけ優しくしたケロ
+    let currentBonusSpeed = 0;  // 高さに応じて加算されるスピードパラメータ
 
     const leafIntervalY = 54; 
     let bgm = new Audio('frog_bgm.mp3');
@@ -350,9 +353,7 @@
         currentPattern = pattern;
         const pf = document.getElementById('preview-frog');
         pf.className = 'frog';
-        if(pattern !== 'none') {
-            pf.classList.add('p-' + pattern);
-        }
+        if(pattern !== 'none') { pf.classList.add('p-' + pattern); }
         document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('p-' + pattern).classList.add('active');
     }
@@ -367,6 +368,7 @@
         isGameOver = false;
         lives = 3; 
         cameraY = 0; 
+        currentBonusSpeed = 0; // スピード加算リセット
         updateLifeDisplay();
         document.getElementById('score-display').innerText = `SCORE: ${score}`;
         
@@ -394,8 +396,6 @@
 
         renderInitialStage();
         positionFrogOnLeaf();
-        
-        // 初回の半透明アップデートを実行ケロ！
         updateLeafTransparencies();
 
         if(animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -404,9 +404,7 @@
 
     function updateLifeDisplay() {
         let lifeStr = "LIFE: ";
-        for(let i=0; i<3; i++) {
-            lifeStr += (i < lives) ? "💚 " : "🖤 ";
-        }
+        for(let i=0; i<3; i++) { lifeStr += (i < lives) ? "💚 " : "🖤 "; }
         document.getElementById('life-display').innerText = lifeStr;
     }
 
@@ -427,14 +425,10 @@
                     let leftHasSnake = Math.random() < 0.4;
                     let rightHasSnake = !leftHasSnake ? Math.random() < 0.4 : false; 
 
-                    if (previousRowWasSnake) {
-                        leftHasSnake = false;
-                        rightHasSnake = false;
-                    }
+                    if (previousRowWasSnake) { leftHasSnake = false; rightHasSnake = false; }
 
                     rowData.leafs.push({ id: `r${row}-l0`, type: 'left', left: 30 + Math.random()*40, hasSnake: leftHasSnake });
                     rowData.leafs.push({ id: `r${row}-l1`, type: 'right', left: 240 + Math.random()*40, hasSnake: rightHasSnake });
-                    
                     previousRowWasSnake = (leftHasSnake || rightHasSnake);
                 } else {
                     let hasSnake = Math.random() < 0.3 && row > 3;
@@ -487,7 +481,7 @@
                 else if(chosenType === 'small') { snake.classList.add('snake-small'); snake.style.color = '#81c784'; }
                 else if(chosenType === 'rainbow') { snake.classList.add('snake-rainbow'); }
                 else if(chosenType === 'poop') { snake.classList.add('snake-poop'); }
-                else if(chosenType === 'trans') { snake.classList.add('snake-trans'); }
+                else if(chosenType === 'trans') { snake.classList.add('snake-trans'); } // おばけヘビ用CSS適応
                 else { snake.style.color = '#4caf50'; }
                 leaf.appendChild(snake);
             }
@@ -505,17 +499,13 @@
         });
     }
 
-    // ★【新システム】届かない上の葉っぱを全部半透明にする処理ケロ！
     function updateLeafTransparencies() {
         const allLeaves = document.querySelectorAll('.leaf');
         allLeaves.forEach(l => {
             let leafRow = parseInt(l.dataset.row);
-            
-            // カエルの現在位置から1個上、または2個上の行だけ「ジャンプ可能」としてクッキリ表示
             if (leafRow === currentLeafRow + 1 || leafRow === currentLeafRow + 2 || leafRow === currentLeafRow) {
                 l.classList.remove('leaf-locked');
             } else {
-                // 3個以上離れた遠い葉っぱは半透明クラスをつけるケロ！
                 l.classList.add('leaf-locked');
             }
         });
@@ -524,8 +514,9 @@
     function animateGame() {
         if (isGameOver) return;
         
-        let currentSpeed = baseScrollSpeed + (currentLeafRow * 0.015);
-        cameraY += currentSpeed; 
+        // ★【大修正】高ランクに応じた加算スピードを計算（復活時はこれがリセットされてマイルドになるケロ！）
+        let totalSpeed = baseScrollSpeed + currentBonusSpeed;
+        cameraY += totalSpeed; 
 
         const scrollContainer = document.getElementById('stage-scroll-container');
         scrollContainer.style.transform = `translateY(${cameraY}px)`;
@@ -638,27 +629,25 @@
             return;
         }
 
-        if(score >= 100) {
-            winGame();
-            return;
-        }
+        if(score >= 100) { winGame(); return; }
 
         currentLeafRow = targetRow;
         
+        // 通常プレイ時は登るにつれて少しずつボーナススピードがアップ
+        currentBonusSpeed = currentLeafRow * 0.015;
+
         const frog = document.getElementById('player-frog');
         let leafBottom = 60 + (currentLeafRow * leafIntervalY);
         frog.style.left = (leafData.currentLeft + 8) + 'px';
         frog.style.bottom = (leafBottom + 12) + 'px';
 
         let minCameraY = (currentLeafRow * leafIntervalY) - 180;
-        if (cameraY < minCameraY) {
-            cameraY = minCameraY;
-        }
+        if (cameraY < minCameraY) { cameraY = minCameraY; }
 
-        // ★ジャンプに成功したら、半透明（すかし）の葉っぱを即座に再計算アップデートするケロ！
         updateLeafTransparencies();
     }
 
+    // ★【新・復活システム】ミスした瞬間、スピードを初期値にリセット！
     function handleMistake(reasonMsg) {
         cancelAnimationFrame(animationFrameId);
         lives--;
@@ -667,10 +656,16 @@
         if (lives <= 0) {
             gameOver(reasonMsg + "\nついにライフがゼロになっちゃったケロ……");
         } else {
-            alert(`${reasonMsg}\nライフを使って復活ケロ！画面を少し戻してあげるケロよ！`);
+            // ★超重要：復活時はボーナススピードを【完全ゼロ】に戻して、スクロールを超マイルドにするケロ！
+            currentBonusSpeed = 0; 
+            
+            alert(`${reasonMsg}\nライフを使って復活ケロ！スクロール速度が一番遅い状態に戻ったから、落ち着いて立て直してケロ！`);
+            
+            // カメラをカエルの安全な位置まで引っ張り上げて救済
             cameraY = (currentLeafRow * leafIntervalY) - 120;
+            
             positionFrogOnLeaf();
-            updateLeafTransparencies(); // 復活時も再計算ケロ
+            updateLeafTransparencies();
             animateGame();
         }
     }
