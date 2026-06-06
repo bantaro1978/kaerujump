@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ケロピョンジャンプ - スマホ最適化版</title>
+    <title>ケロピョンジャンプ - スマホ縦型完全版</title>
     <style>
         body {
             margin: 0;
@@ -19,17 +19,16 @@
             -webkit-user-select: none;
         }
 
-        /* ★iPhoneの画面にすっぽり収まるように全体サイズをコンパクト（750×420 → 640×360）に縮小ケロ */
+        /* ★「ブンナ」の時のような縦長コンパクトサイズ（360px×560px）に完全固定ケロ！ */
         #game-container {
-            width: 640px;
-            height: 360px;
+            width: 360px;
+            height: 560px;
             background-color: #81d4fa;
             position: relative;
             overflow: hidden;
-            border: 5px solid #4e342e;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            display: flex;
+            border: 6px solid #4e342e;
+            border-radius: 20px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.3);
         }
 
         .screen {
@@ -39,133 +38,157 @@
             top: 0;
             left: 0;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
             transition: all 0.3s;
-            z-index: 5;
         }
 
         .hidden { display: none !important; }
 
-        /* メインのゲームステージ（左側：少しスリムに調整） */
-        #main-stage {
-            width: 70%;
-            height: 100%;
-            background: linear-gradient(to bottom, #a5d6a7 0%, #4fc3f7 15%, #29b6f6 100%);
-            position: relative;
-            overflow: hidden;
-            border-right: 4px solid #4e342e;
-        }
-
-        .river-bank {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 40px;
-            background-color: #81c784;
-            border-bottom: 5px solid #66bb6a;
-            z-index: 1;
-        }
-
-        /* 右側のサイドパネル（横幅を圧迫しないように調整） */
-        .side-panel {
-            width: 30%;
-            height: 100%;
-            background-color: #f1f8e9;
-            box-sizing: border-box;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        /* --- 1. タイトル ＆ お着替え（カスタム）画面 --- */
+        #custom-screen {
+            background: linear-gradient(#a5d6a7, #f1f8e9);
+            padding: 20px 15px;
+            justify-content: flex-start;
             z-index: 10;
         }
-
+        .title-logo {
+            font-size: 28px;
+            font-weight: 900;
+            color: #1b5e20;
+            text-shadow: 2px 2px 0px white;
+            margin-bottom: 10px;
+        }
+        .preview-box {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 15px;
+            border: 2px dashed #b0bec5;
+            margin-bottom: 15px;
+        }
+        .panel-section {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 2px solid #c5e1a5;
+        }
         .panel-title {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             color: #33691e;
-            border-bottom: 2px solid #c5e1a5;
-            padding-bottom: 1px;
-            margin: 0;
+            margin-top: 0;
+            margin-bottom: 6px;
+            border-left: 4px solid #8bc34a;
+            padding-left: 6px;
         }
-
-        .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-        .color-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.15); cursor: pointer; }
-        .color-circle.active { border: 2px solid #33691e !important; }
-
-        .pattern-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
-        .pattern-btn { background-color: #ffffff; border: 2px solid #c5e1a5; border-radius: 6px; padding: 4px; font-size: 10px; font-weight: bold; color: #558b2f; cursor: pointer; text-align: center; }
+        .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .color-circle {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15); cursor: pointer; margin: auto;
+        }
+        .color-circle.active { border: 2.5px solid #33691e !important; transform: scale(1.1); }
+        .pattern-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .pattern-btn {
+            background-color: #ffffff; border: 2px solid #c5e1a5; border-radius: 8px;
+            padding: 6px; font-size: 11px; font-weight: bold; color: #558b2f; cursor: pointer; text-align: center;
+        }
         .pattern-btn.active { background-color: #c5e1a5; color: #33691e; border-color: #7cb342; }
 
         .big-action-btn {
-            background-color: #ff7043; color: white; border: none; padding: 8px;
-            font-size: 14px; font-weight: bold; border-radius: 20px; cursor: pointer;
-            box-shadow: 0 3px #d84315; text-align: center; margin-top: auto;
+            background-color: #ff7043; color: white; border: none; padding: 12px 40px;
+            font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 4px #d84315; text-align: center; margin-top: auto;
         }
-        .big-action-btn:active { box-shadow: 0 1px #d84315; transform: translateY(2px); }
+        .big-action-btn:active { box-shadow: 0 1px #d84315; transform: translateY(3px); }
 
-        /* UI表示も文字を少し小さく */
-        .game-header { position: absolute; top: 8px; width: 95%; left: 2.5%; display: flex; justify-content: space-between; align-items: center; z-index: 30; pointer-events: none; }
+        /* --- 2. 説明画面 --- */
+        #info-screen {
+            background-color: rgba(255, 255, 255, 0.95);
+            justify-content: center;
+            padding: 20px;
+            z-index: 20;
+        }
+        .info-box {
+            background: white; padding: 15px; border-radius: 12px; border: 3px solid #4caf50;
+            text-align: center; color: #2e7d32; font-size: 13px; line-height: 1.5;
+        }
+
+        /* --- 3. ゲーム本番画面（全面が川ステージ） --- */
+        #game-screen {
+            background: linear-gradient(to bottom, #a5d6a7 0%, #4fc3f7 15%, #29b6f6 100%);
+            z-index: 5;
+        }
+        #stage-objects { width: 100%; height: 100%; position: relative; }
+        .river-bank { position: absolute; top: 0; left: 0; width: 100%; height: 50px; background-color: #81c784; border-bottom: 5px solid #66bb6a; z-index: 1; }
+        
+        /* ゲーム中UI */
+        .game-header { position: absolute; top: 10px; width: 90%; left: 5%; display: flex; justify-content: space-between; align-items: center; z-index: 30; pointer-events: none; }
         .score-box { font-size: 18px; font-weight: 900; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; }
-        .timer-box { font-size: 20px; font-weight: bold; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; background-color: rgba(78, 52, 46, 0.4); padding: 2px 10px; border-radius: 15px; }
+        .timer-box { font-size: 20px; font-weight: bold; color: #ffffff; text-shadow: 2px 2px 0px #4e342e; background-color: rgba(78, 52, 46, 0.4); padding: 2px 12px; border-radius: 15px; }
 
-        /* カエル（少しコンパクトサイズに変更ケロ） */
+        /* --- 4. フィナーレ画面（すけすけ画像フィット） --- */
+        #finale-screen {
+            background-image: url('image_36e666.jpg');
+            background-size: cover; background-position: center;
+            justify-content: center; z-index: 100;
+        }
+        .finale-banner {
+            background-color: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(2px); padding: 15px 20px; border-radius: 15px;
+            border: 2px solid rgba(76, 175, 80, 0.6); text-align: center;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .celebration-text { font-size: 22px; font-weight: bold; color: #1b5e20; text-shadow: 2px 2px 4px white; margin: 0; animation: bounce 0.5s infinite alternate; }
+
+        /* カエル（縦長画面に合わせてさらにぷっくり可愛く） */
         .frog {
-            width: 55px;
-            height: 50px;
-            background-color: #ffffff;
-            border-radius: 53% 53% 47% 47%;
-            position: relative;
+            width: 52px; height: 48px; background-color: #ffffff; border-radius: 53% 53% 47% 47%; position: relative;
             box-shadow: inset -3px -3px 6px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.2);
             transition: background-color 0.2s;
         }
-        .frog-eye-l, .frog-eye-r { width: 16px; height: 16px; background-color: inherit; border-radius: 50%; position: absolute; top: -6px; }
-        .frog-eye-l { left: 8px; } .frog-eye-r { right: 8px; }
-        .pupil { width: 6px; height: 6px; background-color: #2b2b2b; border-radius: 50%; position: absolute; top: 5px; left: 5px; }
-        .frog-mouth { width: 14px; height: 6px; border-bottom: 2px solid #2b2b2b; border-radius: 0 0 6px 6px; position: absolute; top: 22px; left: 20px; }
+        .frog-eye-l, .frog-eye-r { width: 15px; height: 15px; background-color: inherit; border-radius: 50%; position: absolute; top: -5px; }
+        .frog-eye-l { left: 7px; } .frog-eye-r { right: 7px; }
+        .pupil { width: 5px; height: 5px; background-color: #2b2b2b; border-radius: 50%; position: absolute; top: 5px; left: 5px; }
+        .frog-mouth { width: 12px; height: 5px; border-bottom: 2px solid #2b2b2b; border-radius: 0 0 5px 5px; position: absolute; top: 22px; left: 20px; }
         .frog-blush-l, .frog-blush-r { width: 6px; height: 3px; background-color: #ffab91; border-radius: 50%; position: absolute; top: 22px; }
-        .frog-blush-l { left: 6px; } .frog-blush-r { right: 6px; }
+        .frog-blush-l { left: 5px; } .frog-blush-r { right: 5px; }
 
         /* 模様 */
-        .pattern-tsuno::after { content: '▲ ▲'; position: absolute; top: -10px; left: 12px; font-size: 8px; color: inherit; filter: brightness(80%); }
+        .pattern-tsuno::after { content: '▲ ▲'; position: absolute; top: -9px; left: 11px; font-size: 7px; color: inherit; filter: brightness(80%); }
         .pattern-tsuno { background-image: radial-gradient(circle at 30% 30%, rgba(0,0,0,0.12) 15%, transparent 16%), radial-gradient(circle at 70% 30%, rgba(0,0,0,0.12) 15%, transparent 16%); }
         .pattern-amagaeru { background-image: linear-gradient(90deg, rgba(0,0,0,0.1) 15%, transparent 15%), linear-gradient(270deg, rgba(0,0,0,0.1) 15%, transparent 15%); }
         .pattern-ushigaeru { background-image: radial-gradient(circle at 25% 40%, rgba(0,0,0,0.15) 15%, transparent 16%), radial-gradient(circle at 75% 50%, rgba(0,0,0,0.15) 20%, transparent 21%), radial-gradient(circle at 50% 75%, rgba(0,0,0,0.15) 12%, transparent 13%); }
 
-        #main-stage .frog { position: absolute; transform: scale(0.75); transform-origin: bottom center; z-index: 15; }
+        #stage-objects .frog { position: absolute; transform: scale(0.8); transform-origin: bottom center; z-index: 15; }
 
-        /* 蓮の葉（少しだけサイズ調整） */
+        /* 蓮の葉 */
         .leaf {
-            width: 75px; height: 35px; background-color: #558b2f; border: 2px solid #33691e; border-radius: 50%; position: absolute;
+            width: 70px; height: 32px; background-color: #558b2f; border: 2px solid #33691e; border-radius: 50%; position: absolute;
             box-shadow: 0 4px 0px rgba(0,0,0,0.15); cursor: pointer; z-index: 10;
         }
-        .leaf::before { content: ''; position: absolute; width: 14px; height: 35px; background-color: #29b6f6; right: 8px; top: -2px; border-radius: 50%; }
+        .leaf::before { content: ''; position: absolute; width: 12px; height: 32px; background-color: #29b6f6; right: 6px; top: -2px; border-radius: 50%; }
 
-        /* 🐍 ヘビのサイズも微調整 */
+        /* 🐍 ヘビ */
         .snake {
-            position: absolute; top: -10px; left: 18px; width: 30px; height: 30px;
+            position: absolute; top: -9px; left: 16px; width: 26px; height: 26px;
             border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); z-index: 12;
             box-shadow: inset 0 0 4px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3);
             background-image: radial-gradient(circle, transparent 30%, currentColor 31%);
         }
-        .snake::after { content: '👀'; position: absolute; top: 2px; left: 4px; font-size: 10px; }
-        .snake-big { transform: scale(1.3); top: -16px; left: 15px; }
-        .snake-small { transform: scale(0.7); top: -4px; left: 22px; }
+        .snake::after { content: '👀'; position: absolute; top: 1px; left: 3px; font-size: 9px; }
+        .snake-big { transform: scale(1.3); top: -14px; left: 13px; }
+        .snake-small { transform: scale(0.7); top: -4px; left: 20px; }
         .snake-rainbow { background: linear-gradient(45deg, red, orange, yellow, green, blue, purple); color: #fff; }
         .snake-poop { background-color: #795548; border-color: #5d4037; border-radius: 50% 50% 40% 40%; }
         .snake-trans { background-color: rgba(255, 255, 255, 0.2); color: rgba(0,0,0,0.1); opacity: 0.25; border-color: rgba(0,0,0,0.1); }
-
-        .overlay-screen { position: absolute; width: 100%; height: 100%; background-color: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-
-        /* フィナーレ画面（超すけすけ＆ぴったりフィット） */
-        #finale-screen {
-            background-image: url('image_36e666.jpg');
-            background-size: cover; background-position: center; position: relative;
-        }
-        .finale-banner {
-            background-color: rgba(255, 255, 255, 0.35);
-            backdrop-filter: blur(2px);
-            padding: 12px 24px; border-radius: 15px; border: 2px solid rgba(76, 175, 80, 0.6);
-            text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-        }
-        .celebration-text { font-size: 22px; font-weight: bold; color: #1b5e20; text-shadow: 2px 2px 4px white; margin: 0; animation: bounce 0.5s infinite alternate; }
 
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
     </style>
@@ -174,71 +197,78 @@
 
 <div id="game-container">
     
-    <div id="main-stage">
-        <div class="river-bank"></div>
-        <div class="game-header">
-            <div id="score-display" class="score-box">SCORE: 0</div>
-            <div id="timer-display" class="timer-box">03:00</div>
-        </div>
-        <div id="stage-objects"></div>
-
-        <div id="title-screen" class="overlay-screen">
-            <h1 style="color: #2e7d32; text-shadow: 2px 2px white; margin-bottom: 5px; font-size: 26px;">ケロピョンジャンプ</h1>
-            <p style="color: #558b2f; margin-top: 0; font-size: 13px;">⚠️ 激ムズ！ヘビの試練を乗り越えろケロ！</p>
-            <button class="big-action-btn" onclick="toCustomScreen()" style="width: 150px;">START 🔘</button>
-        </div>
-
-        <div id="info-screen" class="overlay-screen hidden">
-            <div style="background: white; padding: 15px; border-radius: 12px; border: 3px solid #4caf50; max-width: 85%; text-align: center; color: #2e7d32; font-size: 13px;">
-                <h3 style="margin-top:0;">【あそびかた】</h3>
-                <p><strong>📱 iPhone：</strong>次のハスの葉を直接タップ！<br>
-                <strong>💻 PC：</strong>スペースキーでジャンプ！</p>
-                <p style="color: #d32f2f; font-weight: bold; margin: 5px 0;">🐍 ヘビの葉っぱは飛び越えて避けるケロ！</p>
-                <p style="margin: 0;">目標は100枚目の陸地ケロ！🏁</p>
-            </div>
-            <button class="big-action-btn" onclick="startGame()" style="width: 150px; margin-top: 10px;">わかった 🆗</button>
-        </div>
-
-        <div id="finale-screen" class="overlay-screen hidden">
-            <div class="finale-banner">
-                <div class="celebration-text">🎉 最高のフィナーレ！ 🎉</div>
-                <div style="font-size: 14px; color: #1b5e20; font-weight: bold; text-shadow: 1px 1px white;">ついに陸地に到着ケロ！かえるのくにへようこそ！🐸🌾</div>
-                <button class="big-action-btn" onclick="restartGame()" style="width: 150px; margin-top: 5px; background-color:#ff9800; box-shadow: 0 3px #e65100;">もういちど遊ぶ 🔄</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="side-panel">
-        <p class="panel-title" style="font-size:13px; color:#4e342e; border:none; text-align:center;">ケロカスタム</p>
+    <!-- 1. お着替え（カスタム）＆メインタイトル画面 -->
+    <div id="custom-screen" class="screen">
+        <div class="title-logo">ケロピョンジャンプ</div>
         
-        <div style="height: 75px; display: flex; justify-content: center; align-items: center; background: white; border-radius: 10px; border: 2px dashed #b0bec5;">
-            <div id="preview-frog" class="frog" style="transform: scale(0.85);">
+        <!-- プレビュー -->
+        <div class="preview-box">
+            <div id="preview-frog" class="frog">
                 <div class="frog-eye-l"><div class="pupil"></div></div><div class="frog-eye-r"><div class="pupil"></div></div>
                 <div class="frog-blush-l"></div><div class="frog-blush-r"></div><div class="frog-mouth"></div>
             </div>
         </div>
 
-        <p class="panel-title">色をえらぶケロ</p>
-        <div class="color-grid">
-            <div class="color-circle" style="background-color: #f44336;" onclick="setColor('#f44336')"></div>
-            <div class="color-circle" style="background-color: #ff4081;" onclick="setColor('#ff4081')"></div>
-            <div class="color-circle" style="background-color: #ff9800;" onclick="setColor('#ff9800')"></div>
-            <div class="color-circle" style="background-color: #ffeb3b;" onclick="setColor('#ffeb3b')"></div>
-            <div class="color-circle" style="background-color: #4caf50;" onclick="setColor('#4caf50')"></div>
-            <div class="color-circle" style="background-color: #00e5ff;" onclick="setColor('#00e5ff')"></div>
-            <div class="color-circle" style="background-color: #29b6f6;" onclick="setColor('#29b6f6')"></div>
-            <div class="color-circle" style="background-color: #ab47bc;" onclick="setColor('#ab47bc')"></div>
+        <!-- 色選択バー -->
+        <div class="panel-section">
+            <p class="panel-title">カエルのいろ 🟥🩷🟧🟡</p>
+            <div class="color-grid">
+                <div class="color-circle" style="background-color: #f44336;" onclick="setColor('#f44336')"></div>
+                <div class="color-circle" style="background-color: #ff4081;" onclick="setColor('#ff4081')"></div>
+                <div class="color-circle" style="background-color: #ff9800;" onclick="setColor('#ff9800')"></div>
+                <div class="color-circle" style="background-color: #ffeb3b;" onclick="setColor('#ffeb3b')"></div>
+                <div class="color-circle" style="background-color: #4caf50;" onclick="setColor('#4caf50')"></div>
+                <div class="color-circle" style="background-color: #00e5ff;" onclick="setColor('#00e5ff')"></div>
+                <div class="color-circle" style="background-color: #29b6f6;" onclick="setColor('#29b6f6')"></div>
+                <div class="color-circle" style="background-color: #ab47bc;" onclick="setColor('#ab47bc')"></div>
+            </div>
         </div>
 
-        <p class="panel-title">もようを選ぶケロ</p>
-        <div class="pattern-selector">
-            <div class="pattern-btn active" id="p-none" onclick="setPattern('none')">ナシ</div>
-            <div class="pattern-btn" id="p-tsuno" onclick="setPattern('tsuno')">ツノガエル</div>
-            <div class="pattern-btn" id="p-amagaeru" onclick="setPattern('amagaeru')">アマガエル</div>
-            <div class="pattern-btn" id="p-ushigaeru" onclick="setPattern('ushigaeru')">ウシガエル</div>
+        <!-- 模様選択バー -->
+        <div class="panel-section">
+            <p class="panel-title">カエルのもよう 🐸✨</p>
+            <div class="pattern-selector">
+                <div class="pattern-btn active" id="p-none" onclick="setPattern('none')">ナシ</div>
+                <div class="pattern-btn" id="p-tsuno" onclick="setPattern('tsuno')">ツノガエル</div>
+                <div class="pattern-btn" id="p-amagaeru" onclick="setPattern('amagaeru')">アマガエル</div>
+                <div class="pattern-btn" id="p-ushigaeru" onclick="setPattern('ushigaeru')">ウシガエル</div>
+            </div>
         </div>
 
-        <button id="panel-action-btn" class="big-action-btn" onclick="pressDecision()">決定 🆗</button>
+        <!-- 決定して次へ進むスタートボタン -->
+        <button class="big-action-btn" onclick="pressStart()">START 🔘</button>
+    </div>
+
+    <!-- 2. あそびかた説明画面 -->
+    <div id="info-screen" class="screen hidden">
+        <div class="info-box">
+            <h3 style="margin-top:0; font-size: 15px;">【あそびかたケロ！】</h3>
+            <p><strong>📱 iPhone：</strong>次のハスの葉を直接タップ！<br>
+            <strong>💻 PC：</strong>スペースキーでジャンプ！</p>
+            <p style="color: #d32f2f; font-weight: bold; margin: 5px 0;">🐍 とぐろヘビのいる葉は飛び越えろ！</p>
+            <p style="margin: 0;">100枚目の「かえるのくに」へ出発！🏁</p>
+        </div>
+        <button class="big-action-btn" onclick="startGame()" style="margin-top: 15px;">わかった 🆗</button>
+    </div>
+
+    <!-- 3. ゲームプレイ画面 -->
+    <div id="game-screen" class="screen hidden">
+        <div id="stage-objects">
+            <div class="river-bank"></div>
+            <div class="game-header">
+                <div id="score-display" class="score-box">SCORE: 0</div>
+                <div id="timer-display" class="timer-box">03:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 超すけすけフィナーレ画面 -->
+    <div id="finale-screen" class="screen hidden">
+        <div class="finale-banner">
+            <div class="celebration-text">🎉 最高のフィナーレ！ 🎉</div>
+            <div style="font-size: 13px; color: #1b5e20; font-weight: bold; text-shadow: 1px 1px white;">ついに陸地に到着ケロ！かえるのくにへようこそ！🐸🌾</div>
+            <button class="big-action-btn" onclick="restartGame()" style="padding: 8px 25px; font-size:14px; margin-top: 5px; background-color:#ff9800; box-shadow: 0 3px #e65100;">もういちど遊ぶ 🔄</button>
+        </div>
     </div>
 
 </div>
@@ -255,17 +285,13 @@
     const timerMax = 3000;
     let isGameOver = false;
 
-    const leafIntervalY = 28; // 縦の間隔も少し狭めてコンパクトに
+    const leafIntervalY = 32; 
     let bgm = new Audio('frog_bgm.mp3');
     bgm.loop = true;
 
     window.onload = function() { setColor('#ffffff'); };
-    function toCustomScreen() { document.getElementById('title-screen').classList.add('hidden'); }
-    function pressDecision() {
-        if (!document.getElementById('title-screen').classList.contains('hidden')) {
-            document.getElementById('title-screen').classList.add('hidden');
-            return;
-        }
+
+    function pressStart() {
         document.getElementById('info-screen').classList.remove('hidden');
     }
 
@@ -288,8 +314,10 @@
     }
 
     function startGame() {
+        document.getElementById('custom-screen').classList.add('hidden');
         document.getElementById('info-screen').classList.add('hidden');
-        document.getElementById('finale-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        
         score = 0;
         currentLeafIndex = 0;
         isGameOver = false;
@@ -299,8 +327,11 @@
         bgm.play().catch(e => {});
 
         const stage = document.getElementById('stage-objects');
-        stage.innerHTML = '';
+        // ヘビや葉っぱをリセット（ヘッダーと岸辺は残すケロ）
+        const elementsToRemove = stage.querySelectorAll('.leaf, #player-frog');
+        elementsToRemove.forEach(el => el.remove());
 
+        // ゲーム用のマイカエルを生成
         const frog = document.createElement('div');
         frog.id = 'player-frog';
         frog.className = 'frog';
@@ -310,7 +341,7 @@
         stage.appendChild(frog);
 
         leaves = [];
-        for(let i=0; i<18; i++) { createLeaf(i); }
+        for(let i=0; i<20; i++) { createLeaf(i); }
 
         positionFrogOnLeaf();
         resetTimer();
@@ -327,10 +358,11 @@
         leaf.className = 'leaf';
         leaf.dataset.index = index;
         
-        let leftPosition = 15 + Math.random() * 340;
-        if(index === 0) leftPosition = 180;
+        // 360pxの縦長幅に合わせたランダム横位置調整
+        let leftPosition = 15 + Math.random() * 255;
+        if(index === 0) leftPosition = 145;
 
-        let bottomPosition = 40 + (index * leafIntervalY);
+        let bottomPosition = 50 + (index * leafIntervalY);
         leaf.style.left = leftPosition + 'px';
         leaf.style.bottom = bottomPosition + 'px';
         
@@ -354,11 +386,12 @@
         }
 
         leaf.dataset.direction = Math.random() > 0.5 ? 1 : -1;
-        let speedMultiplier = 1 + (index * 0.07); 
-        leaf.dataset.speed = (0.4 + Math.random() * 1.2) * speedMultiplier;
+        let speedMultiplier = 1 + (index * 0.06); 
+        leaf.dataset.speed = (0.3 + Math.random() * 1.0) * speedMultiplier;
         leaf.dataset.currentLeft = leftPosition;
 
         leaf.addEventListener('click', function() {
+            if(document.getElementById('game-screen').classList.contains('hidden')) return;
             let leafIndex = parseInt(this.dataset.index);
             if (leafIndex === currentLeafIndex + 1 || leafIndex === currentLeafIndex + 2) {
                 jumpTo(leafIndex);
@@ -382,8 +415,9 @@
 
             currentLeft += dir * speed;
 
+            // 360pxの壁で綺麗に跳ね返る調整ケロ
             if (currentLeft < 5) { currentLeft = 5; dir = 1; }
-            if (currentLeft > 360) { currentLeft = 360; dir = -1; }
+            if (currentLeft > 280) { currentLeft = 280; dir = -1; }
 
             l.dataset.currentLeft = currentLeft;
             l.dataset.direction = dir;
@@ -394,7 +428,7 @@
             const frog = document.getElementById('player-frog');
             if(frog) {
                 let leafLeft = parseFloat(leaves[currentLeafIndex].style.left);
-                frog.style.left = (leafLeft + 6) + 'px';
+                frog.style.left = (leafLeft + 8) + 'px';
             }
         }
 
@@ -406,15 +440,13 @@
         const currentLeaf = leaves[currentLeafIndex];
         const leafLeft = parseFloat(currentLeaf.style.left);
         const leafBottom = parseFloat(currentLeaf.style.bottom);
-        frog.style.left = (leafLeft + 6) + 'px';
-        frog.style.bottom = (leafBottom + 10) + 'px';
+        frog.style.left = (leafLeft + 8) + 'px';
+        frog.style.bottom = (leafBottom + 12) + 'px';
     }
 
     window.addEventListener('keydown', function(event) {
         if (event.code === 'Space') {
-            if(document.getElementById('info-screen').classList.contains('hidden') && 
-               document.getElementById('title-screen').classList.contains('hidden') && 
-               document.getElementById('finale-screen').classList.contains('hidden') && !isGameOver) {
+            if(!document.getElementById('game-screen').classList.contains('hidden') && !isGameOver) {
                 event.preventDefault();
                 
                 let nextTargetIndex = currentLeafIndex + 1;
@@ -445,7 +477,7 @@
             return;
         }
 
-        while(leaves.length < targetIndex + 18) {
+        while(leaves.length < targetIndex + 20) {
             createLeaf(leaves.length);
         }
 
@@ -491,6 +523,7 @@
         cancelAnimationFrame(animationFrameId);
         isGameOver = true;
         bgm.pause();
+        document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('finale-screen').classList.remove('hidden');
     }
 
@@ -512,7 +545,8 @@
 
     function restartGame() {
         document.getElementById('finale-screen').classList.add('hidden');
-        document.getElementById('title-screen').classList.remove('hidden');
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('custom-screen').classList.remove('hidden');
         document.getElementById('timer-display').innerText = "03:00";
     }
 </script>
